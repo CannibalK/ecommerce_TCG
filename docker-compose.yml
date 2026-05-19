@@ -1,0 +1,67 @@
+services:
+
+  # Base de datos MariaDB
+  # Es el mismo MariaDB que instalarías en un server real, pero dentro de un contenedor.
+  # El puerto 3306 queda expuesto a tu PC para que puedas conectarte con TablePlus, DBeaver, etc.
+  db:
+    image: mariadb:11
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: tcg_ecommerce
+      MARIADB_USER: tcg_user
+      MARIADB_PASSWORD: tcg_password
+    ports:
+      - "3307:3306"  # 3307 en tu PC → 3306 dentro del contenedor (3306 local ya está ocupado)
+    volumes:
+      # Los datos de la DB se guardan acá para que no se pierdan al reiniciar el contenedor
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # phpMyAdmin — interfaz web para ver y editar la DB desde el navegador
+  # Entrás a http://localhost:8080
+  phpmyadmin:
+    image: phpmyadmin:latest
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: db        # Se conecta al contenedor "db" (no a localhost)
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: root
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Backend Laravel
+  # Construido desde nuestro propio Dockerfile (backend/Dockerfile)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      # Monta el código local dentro del contenedor: editas en tu PC, el contenedor lo ve al instante
+      - ./backend:/var/www/html
+    environment:
+      APP_ENV: local
+      APP_DEBUG: true
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: tcg_ecommerce
+      DB_USERNAME: tcg_user
+      DB_PASSWORD: tcg_password
+    depends_on:
+      db:
+        condition: service_healthy  # Espera a que MariaDB esté lista antes de iniciar Laravel
+
+volumes:
+  db_data:

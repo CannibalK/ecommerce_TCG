@@ -1,23 +1,26 @@
-/vendor/
-node_modules/
-npm-debug.log
-yarn-error.log
+# ===== Backend (Laravel) =====
+backend/vendor/
+backend/.env
+backend/.phpunit.result.cache
+backend/storage/logs/*.log
+backend/storage/app/public/
+backend/bootstrap/cache/*.php
 
-# Laravel 4 specific
-bootstrap/compiled.php
-app/storage/
+# ===== Frontend (Next.js) =====
+frontend/node_modules/
+frontend/.env
+frontend/.env.local
+frontend/.next/
+frontend/out/
 
-# Laravel 5 & Lumen specific
-public/storage
-public/hot
+# ===== Docker =====
+# No ignoramos docker-compose.yml porque es parte del proyecto,
+# pero sí ignoramos overrides locales
+docker-compose.override.yml
 
-# Laravel 5 & Lumen specific with changed public path
-public_html/storage
-public_html/hot
-
-storage/*.key
-.env
-Homestead.yaml
-Homestead.json
-/.vagrant
-.phpunit.result.cache
+# ===== General =====
+.DS_Store
+*.log
+.idea/
+.vscode/
+*.swp
