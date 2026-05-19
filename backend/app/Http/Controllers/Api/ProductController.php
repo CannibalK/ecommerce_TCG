@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Product\StoreProductRequest;
+use App\Http\Requests\Product\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -30,37 +32,19 @@ class ProductController extends Controller
         return ProductResource::make($product);
     }
 
-    public function store(Request $request)
+    public function store(StoreProductRequest $request)
     {
-        $data = $request->validate([
-            'card_id'   => 'required|exists:cards,id',
-            'condition' => 'required|in:mint,near_mint,lightly_played,moderately_played,heavily_played,damaged',
-            'language'  => 'required|string|max:10',
-            'price'     => 'required|numeric|min:0.01',
-            'stock'     => 'required|integer|min:1',
-            'is_foil'   => 'boolean',
-        ]);
-
-        $product = $request->user()->listings()->create($data);
+        $product = $request->user()->listings()->create($request->validated());
 
         return ProductResource::make($product->load('card'))
             ->response()
             ->setStatusCode(Response::HTTP_CREATED);
     }
 
-    public function update(Request $request, Product $product)
+    public function update(UpdateProductRequest $request, Product $product)
     {
         $this->authorize('update', $product);
-
-        $data = $request->validate([
-            'condition' => 'in:mint,near_mint,lightly_played,moderately_played,heavily_played,damaged',
-            'price'     => 'numeric|min:0.01',
-            'stock'     => 'integer|min:0',
-            'is_active' => 'boolean',
-        ]);
-
-        $product->update($data);
-
+        $product->update($request->validated());
         return ProductResource::make($product->load('card'));
     }
 
